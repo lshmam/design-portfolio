@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const portfolioData: Partial<PortfolioData> = body.portfolioData;
+        const userId: string | undefined = body.userId;
 
         if (!portfolioData) {
             return NextResponse.json(
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const portfolio = await createPortfolio(portfolioData);
+        const portfolio = await createPortfolio(portfolioData, userId);
 
         if (!portfolio) {
             return NextResponse.json(

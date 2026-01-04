@@ -4,6 +4,7 @@
 -- Create portfolios table
 CREATE TABLE portfolios (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id),
     slug TEXT UNIQUE NOT NULL,
     
     -- Personal info

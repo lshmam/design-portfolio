@@ -21,13 +21,29 @@ function getSupabase(): SupabaseClient {
 }
 
 // Portfolio database operations
-export async function createPortfolio(data: Partial<PortfolioData>): Promise<PortfolioData | null> {
+export async function createPortfolio(data: Partial<PortfolioData>, userId?: string): Promise<PortfolioData | null> {
     const db = getSupabase();
+
+    // Check if portfolio exists for this email
+    const email = data.personal?.email;
+    if (email) {
+        const { data: existing } = await db
+            .from('portfolios')
+            .select('id, slug')
+            .eq('email', email)
+            .single();
+
+        if (existing) {
+            return updatePortfolio(existing.id, { ...data, id: existing.id });
+        }
+    }
+
     const slug = generateSlug(data);
 
     const { data: portfolio, error } = await db
         .from('portfolios')
         .insert({
+            user_id: userId || null,
             slug,
             first_name: data.personal?.firstName || '',
             last_name: data.personal?.lastName || '',
@@ -55,6 +71,42 @@ export async function createPortfolio(data: Partial<PortfolioData>): Promise<Por
 
     if (error) {
         console.error('Error creating portfolio:', error);
+        return null;
+    }
+
+    return mapDbToPortfolio(portfolio);
+}
+
+export async function getPortfolioByUserId(userId: string): Promise<PortfolioData | null> {
+    const db = getSupabase();
+
+    const { data: portfolio, error } = await db
+        .from('portfolios')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error || !portfolio) {
+        return null;
+    }
+
+    return mapDbToPortfolio(portfolio);
+}
+
+export async function getPortfolioByEmail(email: string): Promise<PortfolioData | null> {
+    const db = getSupabase();
+
+    const { data: portfolio, error } = await db
+        .from('portfolios')
+        .select('*')
+        .eq('email', email)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error || !portfolio) {
         return null;
     }
 

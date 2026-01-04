@@ -1,42 +1,56 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import LinkedInUploader from '@/components/linkedin-uploader';
 import EditorLayout from '@/components/editor-layout';
 import type { PortfolioData } from '@/lib/types';
+import { savePortfolio } from '@/app/actions/portfolio';
 
 type ViewState = 'upload' | 'editor';
 
 interface CreatePageClientProps {
     userEmail: string;
+    userId: string;
+    existingPortfolio: PortfolioData | null;
 }
 
-export default function CreatePageClient({ userEmail }: CreatePageClientProps) {
-    const [viewState, setViewState] = useState<ViewState>('upload');
-    const [portfolioData, setPortfolioData] = useState<Partial<PortfolioData>>({
-        personal: {
-            firstName: '',
-            lastName: '',
-            headline: '',
-            summary: '',
-            location: '',
-            email: userEmail, // Pre-fill with user's email
-        },
-        experiences: [],
-        education: [],
-        skills: [],
-        projects: [],
-        templateStyle: 'modern',
-        hostingOption: 'hosted',
-    });
+export default function CreatePageClient({ userEmail, userId, existingPortfolio }: CreatePageClientProps) {
+    // If user has existing portfolio, go directly to editor
+    const [viewState, setViewState] = useState<ViewState>(existingPortfolio ? 'editor' : 'upload');
+    const [portfolioData, setPortfolioData] = useState<Partial<PortfolioData>>(
+        existingPortfolio || {
+            personal: {
+                firstName: '',
+                lastName: '',
+                headline: '',
+                summary: '',
+                location: '',
+                email: userEmail,
+            },
+            experiences: [],
+            education: [],
+            skills: [],
+            projects: [],
+            templateStyle: 'modern',
+            hostingOption: 'hosted',
+        }
+    );
 
-    const handleDataParsed = (data: Partial<PortfolioData>) => {
-        setPortfolioData(prev => ({ ...prev, ...data }));
+    const handleDataParsed = async (data: Partial<PortfolioData>) => {
+        const newData = { ...portfolioData, ...data };
+        setPortfolioData(newData);
         setViewState('editor');
+
+        // Auto-save to Supabase
+        try {
+            await savePortfolio(newData);
+        } catch (error) {
+            console.error('Failed to auto-save portfolio:', error);
+        }
     };
 
     const handleCheckout = async () => {
@@ -44,7 +58,7 @@ export default function CreatePageClient({ userEmail }: CreatePageClientProps) {
             const response = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ portfolioData })
+                body: JSON.stringify({ portfolioData, userId })
             });
 
             const { url } = await response.json();
@@ -54,7 +68,7 @@ export default function CreatePageClient({ userEmail }: CreatePageClientProps) {
         }
     };
 
-    // Show the full editor layout after data import
+    // Show the full editor layout if user has existing portfolio or after data import
     if (viewState === 'editor') {
         return (
             <EditorLayout
@@ -65,7 +79,7 @@ export default function CreatePageClient({ userEmail }: CreatePageClientProps) {
         );
     }
 
-    // Initial upload screen
+    // Initial upload screen (only for new users)
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
