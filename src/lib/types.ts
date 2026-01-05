@@ -20,6 +20,7 @@ export interface PersonalInfo {
 export interface Experience {
   id: string;
   company: string;
+  companyLogoUrl?: string;
   title: string;
   location?: string;
   startDate: string;
@@ -31,6 +32,7 @@ export interface Experience {
 export interface Education {
   id: string;
   school: string;
+  schoolLogoUrl?: string;
   degree: string;
   field: string;
   startDate: string;

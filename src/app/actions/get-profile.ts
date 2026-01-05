@@ -16,6 +16,7 @@ interface UserData {
     experiences: Array<{
         id: string;
         company: string;
+        companyLogoUrl?: string;
         role: string;
         startDate: string;
         endDate: string;
@@ -26,6 +27,7 @@ interface UserData {
     education: Array<{
         id: string;
         school: string;
+        schoolLogoUrl?: string;
         degree: string;
         field: string;
         startDate: string;
@@ -50,6 +52,7 @@ interface LinkedInAPIResponse {
         email?: string;
         experiences?: Array<{
             company: string;
+            company_logo_url?: string;
             title: string;
             date_range: string;
             start_month?: number;
@@ -63,6 +66,7 @@ interface LinkedInAPIResponse {
         }>;
         educations?: Array<{
             school: string;
+            school_logo_url?: string;
             degree?: string;
             field_of_study?: string;
             date_range?: string;
@@ -132,6 +136,7 @@ export async function importLinkedInProfile(linkedinUrl: string): Promise<Partia
             experiences: (data.experiences || []).map(exp => ({
                 id: uuidv4(),
                 company: exp.company || '',
+                companyLogoUrl: exp.company_logo_url || '',
                 role: exp.title || '',
                 startDate: formatDate(exp.start_month, exp.start_year),
                 endDate: exp.is_current ? 'Present' : formatDate(exp.end_month, exp.end_year),
@@ -142,6 +147,7 @@ export async function importLinkedInProfile(linkedinUrl: string): Promise<Partia
             education: (data.educations || []).map(edu => ({
                 id: uuidv4(),
                 school: edu.school || '',
+                schoolLogoUrl: edu.school_logo_url || '',
                 degree: edu.degree || '',
                 field: edu.field_of_study || '',
                 startDate: edu.start_year?.toString() || '',
@@ -164,6 +170,7 @@ export async function importLinkedInProfile(linkedinUrl: string): Promise<Partia
             experiences: userData.experiences.map(exp => ({
                 id: exp.id,
                 company: exp.company,
+                companyLogoUrl: exp.companyLogoUrl,
                 title: exp.role,
                 location: exp.location,
                 startDate: exp.startDate,
@@ -174,6 +181,7 @@ export async function importLinkedInProfile(linkedinUrl: string): Promise<Partia
             education: userData.education.map(edu => ({
                 id: edu.id,
                 school: edu.school,
+                schoolLogoUrl: edu.schoolLogoUrl,
                 degree: edu.degree,
                 field: edu.field,
                 startDate: edu.startDate,

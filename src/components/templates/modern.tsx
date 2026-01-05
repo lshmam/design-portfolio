@@ -74,9 +74,17 @@ export default function ModernTemplate({ portfolio }: TemplateProps) {
                                 }`}
                         >
                             <div className="flex items-start justify-between mb-4">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xl">
-                                    💼
-                                </div>
+                                {exp.companyLogoUrl ? (
+                                    <img
+                                        src={exp.companyLogoUrl}
+                                        alt={exp.company}
+                                        className="w-12 h-12 rounded-xl object-contain bg-white"
+                                    />
+                                ) : (
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xl">
+                                        💼
+                                    </div>
+                                )}
                                 <span className="text-xs text-slate-500">
                                     {exp.startDate} — {exp.current ? 'Present' : exp.endDate}
                                 </span>
