@@ -42,12 +42,9 @@ export default function EditorLayout({ data, onChange }: EditorLayoutProps) {
 
             const result = await response.json();
 
-            if (result.success) {
-                setPublishResult({
-                    success: true,
-                    url: result.url,
-                    slug: result.slug,
-                });
+            if (result.success && result.slug) {
+                // Redirect directly to the published portfolio
+                window.location.href = `/${result.slug}`;
             }
         } catch (error) {
             console.error('Publish error:', error);
