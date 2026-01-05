@@ -38,7 +38,7 @@ export async function createPortfolio(data: Partial<PortfolioData>, userId?: str
         }
     }
 
-    const slug = generateSlug(data);
+    const slug = await generateUniqueSlug(data);
 
     const { data: portfolio, error } = await db
         .from('portfolios')
@@ -199,8 +199,8 @@ export async function checkSlugAvailability(slug: string): Promise<boolean> {
     return !data && !error;
 }
 
-// Helper to generate a unique slug
-function generateSlug(data: Partial<PortfolioData>): string {
+// Helper to generate a base slug from name
+function generateBaseSlug(data: Partial<PortfolioData>): string {
     const firstName = data.personal?.firstName || '';
     const lastName = data.personal?.lastName || '';
     const baseName = `${firstName}-${lastName}`
@@ -208,9 +208,42 @@ function generateSlug(data: Partial<PortfolioData>): string {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
-    // Add random suffix for uniqueness
+    return baseName || 'portfolio';
+}
+
+// Generate a unique slug, checking availability
+async function generateUniqueSlug(data: Partial<PortfolioData>): Promise<string> {
+    const db = getSupabase();
+    const baseSlug = generateBaseSlug(data);
+
+    // First, try the clean slug
+    const { data: existing } = await db
+        .from('portfolios')
+        .select('id')
+        .eq('slug', baseSlug)
+        .single();
+
+    if (!existing) {
+        return baseSlug; // Clean slug is available!
+    }
+
+    // If taken, add a number suffix
+    for (let i = 1; i <= 100; i++) {
+        const numberedSlug = `${baseSlug}-${i}`;
+        const { data: existsNum } = await db
+            .from('portfolios')
+            .select('id')
+            .eq('slug', numberedSlug)
+            .single();
+
+        if (!existsNum) {
+            return numberedSlug;
+        }
+    }
+
+    // Fallback: random suffix
     const suffix = Math.random().toString(36).substring(2, 6);
-    return baseName ? `${baseName}-${suffix}` : suffix;
+    return `${baseSlug}-${suffix}`;
 }
 
 // Map database row to PortfolioData type
